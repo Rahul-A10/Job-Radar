@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Job Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f4;--panel:#fff;--ink:#14202b;--mut:#5f6b76;--line:#d5dbe1;--acc:#2457d6;--soft:#e3ebfb;--new:#c27a00;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1319;--panel:#151c24;--ink:#e8edf2;--mut:#93a0ac;--line:#26303a;--acc:#7aa2ff;--soft:#1a2740;--new:#f0b43c;--bad:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Schibsted Grotesk",system-ui,sans-serif}
+button,select,input,textarea{font:inherit;color:inherit}
+button,.btn{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.pri{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:600}
+input,select,textarea{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+textarea{width:100%;min-height:220px;resize:vertical}
+header{position:sticky;top:0;z-index:5;background:var(--ink);color:var(--bg);display:flex;align-items:center;gap:24px;padding:10px 20px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.02em}
+nav{display:flex;gap:2px;flex-wrap:wrap}nav button{background:none;border:0;color:inherit;opacity:.7;border-radius:6px}
+nav button.on{opacity:1;background:rgba(255,255,255,.14);font-weight:600}
+#stamp{margin-left:auto;font-size:13px;opacity:.7}
+main{max-width:1000px;margin:0 auto;padding:18px 20px 70px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.bar input{flex:1;min-width:200px}
+#stats{color:var(--mut);margin:0 0 10px;font-size:14px}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.job{display:grid;grid-template-columns:5px 1fr auto;gap:16px;padding:12px 16px 12px 0;border-top:1px solid var(--line)}
+.job:first-child{border-top:0}
+.job .bar5{background:var(--acc);border-radius:0 3px 3px 0;align-self:stretch}
+.job h3{margin:0;font-size:16px;font-weight:600}.job a{color:inherit;text-decoration:none}.job a:hover{color:var(--acc);text-decoration:underline}
+.meta{display:flex;gap:6px 16px;flex-wrap:wrap;color:var(--mut);font-size:13px;margin-top:2px}
+.why{color:var(--acc);font-size:13px;margin-top:2px}
+.tag{background:var(--new);color:var(--bg);font-size:11px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:1px}
+.act{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.sc{font-weight:800;font-size:18px;min-width:44px;text-align:right}.sc small{font-weight:400;color:var(--mut);font-size:11px;display:block;line-height:1}
+.on-btn{background:var(--soft);border-color:var(--acc);color:var(--acc)}
+.row{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.row .grow{flex:1;min-width:0}.err{color:var(--bad);font-size:13px}
+.form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.form input{flex:1;min-width:160px}
+label.f{display:block;margin:12px 0 4px;font-weight:600}
+.hint{color:var(--mut);font-size:13px;margin:4px 0}
+dialog{width:min(760px,94vw);background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;display:none;z-index:20;max-width:90vw}
+[hidden]{display:none!important}
+@media(max-width:620px){.job{grid-template-columns:5px 1fr}.act{grid-column:2;justify-content:flex-start}}
+</style></head>
+<body>
+<header><div class="brand">Job Radar</div>
+<nav id="tabs"><button data-tab="dash" class="on">Dashboard</button><button data-tab="applied">Applied <span id="ac"></span></button><button data-tab="sources">Career pages</button><button data-tab="ai">Profile and AI</button><button data-tab="settings">Settings</button></nav>
+<div id="stamp"></div></header>
+<main>
+<section id="dash">
+ <div class="bar"><input id="q" placeholder="Search title, company or location"><select id="fc"></select>
+ <select id="fs"><option value="open">Not applied</option><option value="new">New in 48 hours</option><option value="all">All open jobs</option><option value="closed">Closed postings</option></select>
+ <select id="so"><option value="match">Best match</option><option value="new">Newest first</option></select>
+ <button id="score" class="pri">Score with AI</button></div>
+ <p id="stats"></p><div class="list" id="list"></div>
+</section>
+<section id="applied" hidden>
+ <div class="list" id="alist"></div>
+ <div class="form" style="margin-top:14px"><button id="export">Export backup</button><label class="btn">Import backup<input type="file" id="imp" accept=".json" hidden></label></div>
+ <p class="hint">Applied jobs are saved in this browser. Export a backup to move them to another device.</p>
+</section>
+<section id="sources" hidden>
+ <div class="form"><input id="su" placeholder="Career page URL"><input id="sn" placeholder="Company name"><button id="sadd" class="pri">Add page</button></div>
+ <div class="list" id="slist"></div>
+ <div class="form" style="margin-top:14px"><button id="ssave">Save to repo</button><button id="srun">Check now</button></div>
+ <p class="hint">Save to repo commits careers.json, which starts a check. Without a GitHub token in Settings, the list is copied so you can paste it into careers.json yourself. Greenhouse, Lever and Workday pages work best. Other pages are read with a headless browser.</p>
+</section>
+<section id="ai" hidden>
+ <label class="f" for="prof">Your profile</label>
+ <p class="hint">Paste your resume, projects, skills and the kind of work you want. This is what the AI uses to score jobs and tailor resumes. It only writes from facts found here.</p>
+ <textarea id="prof" placeholder="Resume text, project write-ups, interests, target roles"></textarea>
+ <div class="form" style="margin-top:8px"><label class="btn">Upload .txt, .md or .json files<input type="file" id="pf" accept=".txt,.md,.json" multiple hidden></label><button id="pclear">Clear</button></div>
+</section>
+<section id="settings" hidden>
+ <label class="f" for="repo">GitHub repo (owner/name)</label><input id="repo" style="width:100%">
+ <label class="f" for="tok">GitHub token</label><input id="tok" type="password" style="width:100%" autocomplete="off">
+ <p class="hint">Fine-grained token for this repo only, with Contents and Actions read/write. Used to save career pages and start checks.</p>
+ <label class="f" for="key">Anthropic API key</label><input id="key" type="password" style="width:100%" autocomplete="off">
+ <label class="f" for="model">Model</label><input id="model" style="width:100%" placeholder="claude-sonnet-4-6">
+ <p class="hint">Keys stay in this browser only and go straight to GitHub and Anthropic. Use a key with a spend limit.</p>
+</section>
+</main>
+<dialog id="dlg"><h2 id="dt" style="margin:0 0 8px;font-size:18px"></h2>
+ <label class="f" for="jd">Job description</label><textarea id="jd" style="min-height:120px" placeholder="Paste the full job description for the best result"></textarea>
+ <div class="form" style="margin:10px 0"><button id="gen" class="pri">Write tailored resume</button><button id="cp">Copy</button><button id="dl">Download .md</button><button id="cl">Close</button></div>
+ <textarea id="out" style="min-height:300px" placeholder="Your tailored resume appears here"></textarea></dialog>
+<div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let jobs=[],errors={},sources=[],cur=[],tailorJob=null;
+let cfg=ls('jr_cfg',{}),applied=ls('jr_applied',{}),scores=ls('jr_scores',{}),profile=ls('jr_profile','');
+if(!cfg.repo&&location.hostname.endsWith('.github.io')){const o=location.hostname.split('.')[0],p=location.pathname.split('/')[1];cfg.repo=o+'/'+(p&&!p.includes('.')?p:location.hostname)}
+const STAGES=['Applied','Screening','Interview','Offer','Rejected','Withdrawn'];
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',3500)}
+
+/* data */
+async function load(){
+ try{const d=await (await fetch('jobs.json?'+Date.now())).json();jobs=d.jobs||[];errors=d.errors||{};
+  $('#stamp').textContent=d.updated?'Last check '+new Date(d.updated).toLocaleString():'No check yet'}catch{$('#stamp').textContent='jobs.json not found'}
+ try{sources=await (await fetch('careers.json?'+Date.now())).json()}catch{sources=[]}
+ const cs=[...new Set([...jobs.map(j=>j.company),...sources.map(s=>s.name)].filter(Boolean))].sort();
+ $('#fc').innerHTML='<option value="">All companies</option>'+cs.map(c=>`<option>${esc(c)}</option>`).join('');
+ renderSources();view();renderApplied();
+}
+
+/* scoring */
+const STOP=new Set('the and for with that this from have has are was were you your our their will not but can all any more using used use work worked project projects experience years team new such also into over per via etc its'.split(' '));
+function kws(){if(kws.p===profile)return kws.c;const f={};(profile.toLowerCase().match(/[a-z+#][a-z0-9+#.\-]{2,}/g)||[]).forEach(w=>{if(!STOP.has(w))f[w]=(f[w]||0)+1});kws.p=profile;return kws.c=Object.entries(f).sort((a,b)=>b[1]-a[1]).slice(0,80).map(x=>x[0])}
+function localScore(j){const k=kws();if(!k.length)return 0;const t=(j.title+' '+(j.desc||'')).toLowerCase();return Math.min(95,Math.round(k.filter(w=>t.includes(w)).length/Math.min(k.length,25)*100))}
+async function claude(system,user,max=2500){
+ if(!cfg.key)throw new Error('Add your Anthropic API key in Settings');
+ const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':cfg.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:cfg.model||'claude-sonnet-4-6',max_tokens:max,system,messages:[{role:'user',content:user}]})});
+ const j=await r.json();if(!r.ok)throw new Error(j.error?.message||r.status);return j.content.map(c=>c.text||'').join('')}
+async function aiScore(){
+ if(!profile.trim())return toast('Add your profile first');
+ const todo=cur.filter(j=>!scores[j.id]).slice(0,60);if(!todo.length)return toast('Nothing new to score');
+ const b=$('#score');b.disabled=true;
+ try{for(let i=0;i<todo.length;i+=20){b.textContent=`Scoring ${i+1} to ${Math.min(i+20,todo.length)} of ${todo.length}`;
+  const list=todo.slice(i,i+20).map(j=>[j.id,j.company,j.title,j.location,(j.desc||'').slice(0,250)].join('|')).join('\n');
+  const out=await claude('You rank job postings for one candidate. Using only the profile, score each job 0-100 for fit with the candidate\'s skills, projects and stated interests. Be strict: most jobs should score below 60. Reply with only a JSON array of {"id","score","why"}; why is under 15 words.',`PROFILE:\n${profile}\n\nJOBS (id|company|title|location|snippet):\n${list}`);
+  JSON.parse(out.match(/\[[\s\S]*\]/)[0]).forEach(r=>scores[r.id]={score:Math.round(+r.score),why:String(r.why||'')});sv('jr_scores',scores);view()}
+  toast('Scored '+todo.length+' jobs')}catch(e){toast('Scoring failed: '+e.message)}
+ b.disabled=false;b.textContent='Score with AI'}
+
+/* dashboard */
+function view(){
+ const q=$('#q').value.toLowerCase(),c=$('#fc').value,s=$('#fs').value,so=$('#so').value,now=Date.now();
+ cur=jobs.filter(j=>{
+  if(s==='closed')return j.status==='closed';
+  if(j.status==='closed')return false;
+  if(s!=='all'&&applied[j.id])return false;
+  if(s==='new'&&now-Date.parse(j.first_seen)>1728e5)return false;
+  if(c&&j.company!==c)return false;
+  return !q||(j.title+' '+j.company+' '+j.location).toLowerCase().includes(q)});
+ cur.forEach(j=>j._s=scores[j.id]?scores[j.id].score:localScore(j));
+ cur.sort(so==='match'?(a,b)=>b._s-a._s:(a,b)=>Date.parse(b.first_seen)-Date.parse(a.first_seen));
+ const open=jobs.filter(j=>j.status!=='closed');
+ $('#stats').textContent=`${cur.length} shown, ${open.length} open, ${open.filter(j=>now-Date.parse(j.first_seen)<1728e5).length} new in 48 hours`;
+ $('#list').innerHTML=cur.map(j=>{const ai=!!scores[j.id],isNew=now-Date.parse(j.first_seen)<1728e5;
+  return `<article class="job"><div class="bar5" style="opacity:${.15+j._s/120}"></div><div>
+  <h3><a href="${esc(j.url)}" target="_blank" rel="noopener">${esc(j.title)}</a>${isNew?'<span class="tag">NEW</span>':''}</h3>
+  <div class="meta"><span>${esc(j.company)}</span>${j.location?`<span>${esc(j.location)}</span>`:''}<span>Found ${new Date(j.first_seen).toLocaleDateString()}</span></div>
+  ${ai&&scores[j.id].why?`<div class="why">${esc(scores[j.id].why)}</div>`:''}</div>
+  <div class="act"><div class="sc" title="${ai?'AI score':'Keyword match from your profile. Run Score with AI for a better read.'}">${ai?'':'~'}${j._s}<small>${ai?'AI':'keywords'}</small></div>
+  <button data-act="apply" data-id="${j.id}" class="${applied[j.id]?'on-btn':''}">${applied[j.id]?'Applied':'Mark applied'}</button>
+  <button data-act="tailor" data-id="${j.id}">Tailor resume</button></div></article>`}).join('')
+  ||`<div class="row"><span class="hint">${jobs.length?'No jobs match these filters.':'No jobs yet. Add a career page, then run a check.'}</span></div>`;
+}
+function renderApplied(){
+ const a=Object.entries(applied).sort((x,y)=>y[1].date.localeCompare(x[1].date));$('#ac').textContent=a.length||'';
+ $('#alist').innerHTML=a.map(([id,r])=>`<div class="row"><div class="grow"><b><a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(r.title)}</a></b>
+  <div class="meta"><span>${esc(r.company)}</span><span>Applied ${esc(r.date)}</span></div>
+  <input data-act="note" data-id="${id}" value="${esc(r.note||'')}" placeholder="Notes, contacts, next step" style="width:100%;margin-top:6px"></div>
+  <select data-act="stage" data-id="${id}">${STAGES.map(s=>`<option${s===r.stage?' selected':''}>${s}</option>`).join('')}</select>
+  <button data-act="unapply" data-id="${id}">Remove</button></div>`).join('')||'<div class="row"><span class="hint">Nothing yet. Use Mark applied on the dashboard.</span></div>';
+}
+function renderSources(){
+ $('#slist').innerHTML=sources.map((s,i)=>`<div class="row"><div class="grow"><b>${esc(s.name||'')}</b><div class="hint" style="word-break:break-all">${esc(s.url)}</div>${errors[s.url]?`<div class="err">${esc(errors[s.url])}</div>`:''}</div><button data-act="rm" data-i="${i}">Remove</button></div>`).join('')||'<div class="row"><span class="hint">No career pages yet. Paste a URL above.</span></div>'}
+
+/* GitHub */
+const gh=(p,o={})=>fetch(`https://api.github.com/repos/${cfg.repo}/${p}`,{...o,headers:{Authorization:'Bearer '+cfg.token,Accept:'application/vnd.github+json'}});
+async function saveSources(){
+ const json=JSON.stringify(sources,null,2);
+ if(!cfg.token||!cfg.repo){try{await navigator.clipboard.writeText(json)}catch{}return toast('No token set. List copied. Paste it into careers.json and commit.')}
+ const r=await gh('contents/careers.json');const j=r.ok?await r.json():{};
+ const p=await gh('contents/careers.json',{method:'PUT',body:JSON.stringify({message:'Update career pages',content:btoa(unescape(encodeURIComponent(json))),...(j.sha?{sha:j.sha}:{})})});
+ toast(p.ok?'Saved. A check starts in a few seconds.':'Save failed ('+p.status+'). Check repo and token.')}
+async function runNow(){
+ if(!cfg.token)return toast('Add a GitHub token in Settings');
+ const r=await gh('actions/workflows/check-jobs.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main'})});
+ toast(r.ok?'Check started. Refresh in a minute or two.':'Could not start check ('+r.status+')')}
+
+/* resume */
+function openTailor(j){tailorJob=j;$('#dt').textContent=j.title+' at '+j.company;$('#jd').value=j.desc||'';$('#out').value='';$('#dlg').showModal()}
+async function gen(){
+ if(!profile.trim())return toast('Add your profile first');
+ const b=$('#gen');b.disabled=true;b.textContent='Writing';
+ try{$('#out').value=await claude('You write one-page tailored resumes in Markdown. Use only facts, projects, tools and numbers found in the profile. Never invent experience, metrics or skills. Pick and order the most relevant projects and skills for the job, mirror its keywords where they truthfully apply, and keep bullets short and specific. After the resume add a section "Fit notes" with 3 bullets: strongest matches, gaps, and what to emphasize in a cover note.',`PROFILE:\n${profile}\n\nJOB: ${tailorJob.title} at ${tailorJob.company}, ${tailorJob.location||''}\nURL: ${tailorJob.url}\n\nDESCRIPTION:\n${$('#jd').value||'(not provided, infer from the title only and say so in Fit notes)'}`,3500)}
+ catch(e){toast('Failed: '+e.message)}
+ b.disabled=false;b.textContent='Write tailored resume'}
+
+/* events */
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const id=b.dataset.id,a=b.dataset.act,j=jobs.find(x=>x.id===id);
+ if(a==='apply'){if(applied[id])delete applied[id];else applied[id]={date:new Date().toISOString().slice(0,10),stage:'Applied',note:'',title:j.title,company:j.company,url:j.url};sv('jr_applied',applied);view();renderApplied()}
+ if(a==='unapply'){delete applied[id];sv('jr_applied',applied);renderApplied();view()}
+ if(a==='tailor')openTailor(j);
+ if(a==='rm'){sources.splice(+b.dataset.i,1);renderSources()}});
+document.addEventListener('change',e=>{const t=e.target,id=t.dataset.id;
+ if(t.dataset.act==='stage'){applied[id].stage=t.value;sv('jr_applied',applied)}
+ if(t.dataset.act==='note'){applied[id].note=t.value;sv('jr_applied',applied)}});
+$('#tabs').onclick=e=>{const t=e.target.dataset.tab;if(!t)return;$$('#tabs button').forEach(b=>b.classList.toggle('on',b===e.target));$$('main>section').forEach(s=>s.hidden=s.id!==t)};
+['q','fc','fs','so'].forEach(i=>$('#'+i).addEventListener('input',view));
+$('#score').onclick=aiScore;
+$('#sadd').onclick=()=>{let u=$('#su').value.trim();if(!u)return toast('Paste a career page URL');if(!/^https?:/.test(u))u='https://'+u;
+ sources.push({url:u,name:$('#sn').value.trim()||new URL(u).hostname.replace(/^(www|jobs|careers)\./,'')});$('#su').value=$('#sn').value='';renderSources()};
+$('#ssave').onclick=saveSources;$('#srun').onclick=runNow;
+$('#prof').value=profile;$('#prof').oninput=e=>{profile=e.target.value;sv('jr_profile',profile)};
+$('#pf').onchange=async e=>{let t=profile;for(const f of e.target.files)t+=(t?'\n\n':'')+'# '+f.name+'\n'+await f.text();profile=t;$('#prof').value=t;sv('jr_profile',t);toast('Profile updated')};
+$('#pclear').onclick=()=>{profile='';$('#prof').value='';sv('jr_profile','')};
+[['repo','repo'],['tok','token'],['key','key'],['model','model']].forEach(([i,k])=>{$('#'+i).value=cfg[k]||'';$('#'+i).onchange=e=>{cfg[k]=e.target.value.trim();sv('jr_cfg',cfg)}});
+$('#gen').onclick=gen;$('#cl').onclick=()=>$('#dlg').close();
+$('#cp').onclick=async()=>{try{await navigator.clipboard.writeText($('#out').value);toast('Copied')}catch{toast('Copy failed')}};
+$('#dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('#out').value],{type:'text/markdown'}));a.download=(tailorJob.company+'-'+tailorJob.title).replace(/[^\w]+/g,'-')+'.md';a.click()};
+$('#export').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({applied,scores,profile},null,1)],{type:'application/json'}));a.download='job-radar-backup.json';a.click()};
+$('#imp').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());Object.assign(applied,d.applied||{});Object.assign(scores,d.scores||{});if(d.profile&&!profile){profile=d.profile;$('#prof').value=profile}
+ sv('jr_applied',applied);sv('jr_scores',scores);sv('jr_profile',profile);renderApplied();view();toast('Backup imported')}catch{toast('Not a valid backup file')}};
+load();setInterval(load,10*60*1000);
+</script></body></html>
